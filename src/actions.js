@@ -13,7 +13,7 @@ const nOfLi = node => {
   return Array.from(li.parentElement.children).indexOf(li);
 };
 
-function getActions(window, root){
+export default function makeActions(window, root){
 
   const loadEvents = fromEvent(window, 'load');
 
@@ -98,5 +98,3 @@ function getActions(window, root){
     confirmEditActions, clearCompletedActions, hashActions, allActions
   };
 }
-
-export default getActions;
