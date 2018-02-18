@@ -20,7 +20,10 @@ function makeSideEffects(actions, view){
   );
 
   pipe(
-    merge(actions.initActions, actions.deleteActions, actions.confirmEditActions, actions.newTodoActions),
+    merge(
+      actions.initActions, actions.deleteActions, actions.confirmEditActions,
+      actions.newTodoActions, actions.cancelEditActions
+    ),
     forEach(a => document.querySelector(".new-todo").focus())
   );
   
