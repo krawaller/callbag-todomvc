@@ -1,86 +1,6 @@
 import pipe from 'callbag-pipe';
 import scan from 'callbag-scan';
 
-const reducer = (curState, action) => {
-  if (action.type === 'CONFIRMEDIT' && !curState.editText){
-    action.type = 'DELETETODO';
-  }
-  if (action.idx !== undefined && curState.filter !== 'all'){
-    action.idx += curState.todos.filter(
-      t => !t.done && curState.filter === 'completed' || t.done && curState.filter === 'active'
-    ).length;
-  }
-  switch(action.type){
-    case 'NEWTODO': {
-      return !curState.newName ? curState : {
-        ...curState,
-        todos: curState.todos.concat({
-          text: curState.newName,
-          editing: false,
-          done: false
-        }),
-        newName: ''
-      };
-    }
-    case 'NEWNAME': return {...curState, newName: action.value};
-    case 'DELETETODO': return {
-      ...curState,
-      todos: curState.todos.slice(0,action.idx).concat(curState.todos.slice(action.idx+1))
-    }
-    case 'TOGGLETODO': return {
-      ...curState,
-      todos: curState.todos.slice(0,action.idx).concat({
-        ...curState.todos[action.idx],
-        done: !curState.todos[action.idx].done
-      }).concat(curState.todos.slice(action.idx+1))
-    }
-    case 'CONFIRMEDIT': return {
-      ...curState,
-      todos: curState.todos.slice(0,action.idx).concat({
-        ...curState.todos[action.idx],
-        text: curState.editText
-      }).concat(curState.todos.slice(action.idx+1))
-    }
-    case 'EDIT': return {
-      ...curState,
-      todos: curState.todos.slice(0,action.idx).concat({
-        ...curState.todos[action.idx],
-        editing: true,
-      }).concat(curState.todos.slice(action.idx+1)),
-      editText: curState.todos[action.idx].text
-    }
-    case 'CHANGEEDITNAME': return {
-      ...curState,
-      editText: action.value
-    }
-    case 'CANCELEDIT': return action.idx === curState.todos.length ? curState : {
-      ...curState,
-      todos: curState.todos.map(t => ({...t, editing: false}))
-    }
-    case 'TOGGLEALL': return {
-      ...curState,
-      todos: curState.todos.map(t => ({...t, done: curState.remaining !== 0}))
-    }
-    case 'CLEARCOMPLETED': return {
-      ...curState,
-      todos: curState.todos.filter(t => !t.done)
-    }
-    case 'HASH': return {
-      ...curState,
-      filter: action.value === 'completed' ? 'completed' : action.value === 'active' ? 'active' : 'all'
-    }
-    default: return curState;
-  }
-}
-
-const augmenter = reducer => (curState, action) => {
-  let newState = reducer(curState, action);
-  return {
-    ...newState,
-    remaining: newState.todos.filter(t => !t.done).length
-  };
-};
-
 const initialState = {
   todos: [],
   newName: '',
@@ -88,11 +8,86 @@ const initialState = {
   filter: 'all'
 };
 
-function makeStateStream(actions){
+export default function makeStateStream(actions){
   return pipe(
     actions.allActions,
     scan(augmenter(reducer), initialState),
   );
 }
 
-export default makeStateStream;
+function updateInList(state, n, mapper){
+  return state.todos.slice(0,n)
+    .concat(mapper(state.todos[n],state))
+    .concat(state.todos.slice(n+1));
+}
+
+function reducer(state, action){
+  if (action.type === 'CONFIRMEDIT' && !state.editText){
+    action.type = 'DELETETODO';
+  }
+  if (action.idx !== undefined && state.filter !== 'all'){
+    action.idx += state.todos.filter(
+      t => !t.done && state.filter === 'completed' || t.done && state.filter === 'active'
+    ).length;
+  }
+  switch(action.type){
+    case 'NEWTODO': {
+      return !state.newName ? state : {
+        ...state,
+        todos: state.todos.concat({
+          text: state.newName,
+          editing: false,
+          done: false
+        }),
+        newName: ''
+      };
+    }
+    case 'NEWNAME': return {...state, newName: action.value};
+    case 'DELETETODO': return {
+      ...state,
+      todos: state.todos.slice(0,action.idx).concat(state.todos.slice(action.idx+1))
+    }
+    case 'TOGGLETODO': return {
+      ...state,
+      todos: updateInList(state, action.idx, t => ({...t, done: !t.done}))
+    }
+    case 'CONFIRMEDIT': return {
+      ...state,
+      todos: updateInList(state, action.idx, (t,s) => ({...t, text: s.editText}))
+    }
+    case 'EDIT': return {
+      ...state,
+      todos: updateInList(state, action.idx, (t,s) => ({...t, editing: true})),
+      editText: state.todos[action.idx].text
+    }
+    case 'CHANGEEDITNAME': return {
+      ...state,
+      editText: action.value
+    }
+    case 'CANCELEDIT': return action.idx === state.todos.length ? state : {
+      ...state,
+      todos: state.todos.map(t => ({...t, editing: false}))
+    }
+    case 'TOGGLEALL': return {
+      ...state,
+      todos: state.todos.map(t => ({...t, done: state.remaining !== 0}))
+    }
+    case 'CLEARCOMPLETED': return {
+      ...state,
+      todos: state.todos.filter(t => !t.done)
+    }
+    case 'HASH': return {
+      ...state,
+      filter: action.value === 'completed' ? 'completed' : action.value === 'active' ? 'active' : 'all'
+    }
+    default: return state;
+  }
+}
+
+const augmenter = reducer => (state, action) => {
+  let newState = reducer(state, action);
+  return {
+    ...newState,
+    remaining: newState.todos.filter(t => !t.done).length
+  };
+};
