@@ -1,0 +1,37 @@
+{
+  "name": "callbag-todomvc",
+  "version": "1.0.0",
+  "author": "David Waller",
+  "dependencies": {
+    "callbag-filter": "^1.0.1",
+    "callbag-for-each": "^1.0.1",
+    "callbag-from-delegated-event": "^1.1.1",
+    "callbag-from-event": "^1.0.0",
+    "callbag-map": "^1.0.1",
+    "callbag-map-to": "^1.0.2",
+    "callbag-merge": "^1.1.0",
+    "callbag-merge-with": "^1.0.2",
+    "callbag-pipe": "^1.1.1",
+    "callbag-scan": "^1.0.1",
+    "callbag-share": "^1.0.0",
+    "callbag-tap": "^1.0.2",
+    "callbag-with-previous": "^1.0.1",
+    "snabbdom": "^0.7.1",
+    "snabbdom-pragma": "^2.6.0",
+    "todomvc-app-css": "^2.1.0"
+  },
+  "devDependencies": {
+    "babel-core": "6.26.0",
+    "babel-loader": "7.1.2",
+    "babel-plugin-transform-object-rest-spread": "6.26.0",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "babel-preset-env": "1.6.1",
+    "fs-extra": "^5.0.0",
+    "webpack": "3.10.0",
+    "webpack-dev-server": "^2.11.1"
+  },
+  "scripts": {
+    "build": "node setupdist && webpack",
+    "start:dev": "node setupdist && webpack-dev-server"
+  }
+}
