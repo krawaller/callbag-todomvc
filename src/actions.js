@@ -48,7 +48,7 @@ export default function makeActions(window, root){
     fromDelegatedEvent(root, '.toggle-all', 'click'),
     mapTo({type: 'TOGGLEALL'})
   );
-  
+
   const toggleTodoActions = pipe(
     fromDelegatedEvent(root, '.toggle', 'click'),
     map(e => ({type: 'TOGGLETODO', idx: nOfLi(e.target)})),
