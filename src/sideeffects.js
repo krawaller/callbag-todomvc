@@ -10,7 +10,7 @@ const patch = require('snabbdom').init([
   require('snabbdom/modules/attributes').default
 ]);
 
-function makeSideEffects(window, actions, view){
+export default function makeSideEffects(window, actions, view){
 
   pipe(
     withPrevious(view),
@@ -33,5 +33,3 @@ function makeSideEffects(window, actions, view){
   );
 
 }
-
-export default makeSideEffects;
