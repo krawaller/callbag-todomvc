@@ -57,7 +57,7 @@ function reducer(state, action){
     }
     case 'EDIT': return {
       ...state,
-      todos: updateInList(state, action.idx, (t,s) => ({...t, editing: true})),
+      todos: updateInList(state, action.idx, t => ({...t, editing: true})),
       editText: state.todos[action.idx].text
     }
     case 'CHANGEEDITNAME': return {
