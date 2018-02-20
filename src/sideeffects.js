@@ -10,12 +10,12 @@ const patch = require('snabbdom').init([
   require('snabbdom/modules/attributes').default
 ]);
 
-function makeSideEffects(actions, view){
+function makeSideEffects(window, actions, view){
 
   pipe(
     withPrevious(view),
     forEach(([cur,prev,isFirst]) => {
-      patch(isFirst ? document.getElementById('renderoutput') : prev, cur)
+      patch(isFirst ? window.document.getElementById('renderoutput') : prev, cur)
     })
   );
 
@@ -24,12 +24,12 @@ function makeSideEffects(actions, view){
       actions.initActions, actions.deleteActions, actions.confirmEditActions,
       actions.newTodoActions, actions.cancelEditActions
     ),
-    forEach(a => document.querySelector(".new-todo").focus())
+    forEach(a => window.document.querySelector(".new-todo").focus())
   );
 
   pipe(
     actions.editActions,
-    forEach(() => document.querySelector(".editing .edit").focus())
+    forEach(() => window.document.querySelector(".editing .edit").focus())
   );
 
 }
