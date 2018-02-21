@@ -7,4 +7,4 @@ const actions = makeActions(window, window.document.getElementById('app'));
 const state = makeStateStream(actions);
 const view = makeViewStream(state);
 
-makeSideEffects(window, actions, view);
+makeSideEffects(window, state, actions, view);

@@ -3,8 +3,6 @@ import scan from 'callbag-scan';
 
 const initialState = {
   todos: [],
-  newName: '',
-  editText: '',
   filter: 'all'
 };
 
@@ -22,27 +20,20 @@ function updateInList(state, n, mapper){
 }
 
 function reducer(state, action){
-  if (action.type === 'CONFIRMEDIT' && !state.editText){
-    action.type = 'DELETETODO';
-  }
   if (action.idx !== undefined && state.filter !== 'all'){
     action.idx += state.todos.filter(
       t => !t.done && state.filter === 'completed' || t.done && state.filter === 'active'
     ).length;
   }
   switch(action.type){
-    case 'NEWTODO': {
-      return !state.newName ? state : {
-        ...state,
-        todos: state.todos.concat({
-          text: state.newName,
-          editing: false,
-          done: false
-        }),
-        newName: ''
-      };
-    }
-    case 'NEWNAME': return {...state, newName: action.value};
+    case 'NEWTODO': return {
+      ...state,
+      todos: state.todos.concat({
+        text: action.value,
+        editing: false,
+        done: false
+      })
+    };
     case 'DELETETODO': return {
       ...state,
       todos: state.todos.slice(0,action.idx).concat(state.todos.slice(action.idx+1))
@@ -53,16 +44,11 @@ function reducer(state, action){
     }
     case 'CONFIRMEDIT': return {
       ...state,
-      todos: updateInList(state, action.idx, (t,s) => ({...t, text: s.editText}))
+      todos: updateInList(state, action.idx, (t,s) => ({...t, editing: false, text: action.value}))
     }
-    case 'EDIT': return {
+    case 'STARTEDIT': return {
       ...state,
-      todos: updateInList(state, action.idx, t => ({...t, editing: true})),
-      editText: state.todos[action.idx].text
-    }
-    case 'CHANGEEDITNAME': return {
-      ...state,
-      editText: action.value
+      todos: updateInList(state, action.idx, t => ({...t, editing: true}))
     }
     case 'CANCELEDIT': return action.idx === state.todos.length ? state : {
       ...state,

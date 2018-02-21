@@ -7,6 +7,13 @@ import filter from 'callbag-filter';
 import merge from 'callbag-merge';
 import mergeWith from 'callbag-merge-with';
 import share from 'callbag-share';
+import proxy from 'callbag-proxy';
+import sample from 'callbag-sample';
+import latest from 'callbag-latest';
+import tap from 'callbag-tap';
+import sampleCombine from 'callbag-sample-combine';
+
+const log = name => tap(v => console.log(name, v));
 
 const nOfLi = node => {
   const li = node.closest('li');
@@ -27,23 +34,6 @@ export default function makeActions(window, root){
     map(e => ({type: 'HASH', value: e.target.location.hash.replace(/^#\//,'')}))
   );
 
-  const editNameActions = pipe(
-    fromDelegatedEvent(root, '.edit', 'change'),
-    map(e => ({type: 'CHANGEEDITNAME', value: e.target.value}))
-  );
-
-  const newNameActions = pipe(
-    fromDelegatedEvent(root, '.new-todo', 'change'),
-    map(e => e.target.value),
-    map(v => ({type: 'NEWNAME', value: v}))
-  );
-
-  const deleteActions = pipe(
-    fromDelegatedEvent(root, '.destroy', 'click'),
-    map(e => ({type: 'DELETETODO', idx: nOfLi(e.target)})),
-    share
-  );
-
   const toggleAllActions = pipe(
     fromDelegatedEvent(root, '.toggle-all', 'click'),
     mapTo({type: 'TOGGLEALL'})
@@ -52,18 +42,12 @@ export default function makeActions(window, root){
   const toggleTodoActions = pipe(
     fromDelegatedEvent(root, '.toggle', 'click'),
     map(e => ({type: 'TOGGLETODO', idx: nOfLi(e.target)})),
+    log("TOGGLETODO"),
   );
 
-  const editActions = pipe(
-    fromDelegatedEvent(root, '.todo-list > li', 'dblclick', true),
-    filter(e => !e.target.matches('[type=checkbox]')),
-    map(e => ({type: 'EDIT', idx: nOfLi(e.target)})),
-  );
-
-  const confirmEditActions = pipe(
-    fromDelegatedEvent(root, '.edit', 'keyup'),
-    filter(e => e.key === 'Enter'),
-    map(e => ({type: 'CONFIRMEDIT', idx: nOfLi(e.target)})),
+  const clearCompletedActions = pipe(
+    fromDelegatedEvent(root, '.clear-completed', 'click'),
+    mapTo({type: 'CLEARCOMPLETED'})
   );
 
   const cancelEditActions = pipe(
@@ -75,26 +59,72 @@ export default function makeActions(window, root){
     mapTo({type: 'CANCELEDIT'})
   );
 
+  const newTodoActions_proxy = proxy();
+  const newNameTypeStream = pipe(
+    fromDelegatedEvent(root, '.new-todo', 'change'),
+    map(e => e.target.value),
+    mergeWith(pipe(
+      newTodoActions_proxy,
+      mapTo('')
+    ))
+  );
+
   const newTodoActions = pipe(
     fromDelegatedEvent(root, '.new-todo', 'keyup'),
     filter(e => e.key === 'Enter'),
-    mapTo({type: 'NEWTODO'}),
+    sample(latest(newNameTypeStream)),
+    filter(v => v.length),
+    map(v => ({type: 'NEWTODO', value: v})),
+    share
+  );
+  newTodoActions_proxy.connect(newTodoActions);
+
+  const startEditActions = pipe(
+    fromDelegatedEvent(root, '.todo-list > li', 'dblclick', true),
+    filter(e => !e.target.matches('[type=checkbox]')),
+    map(e => ({type: 'STARTEDIT', idx: nOfLi(e.target)})),
   );
 
-  const clearCompletedActions = pipe(
-    fromDelegatedEvent(root, '.clear-completed', 'click'),
-    mapTo({type: 'CLEARCOMPLETED'})
+  const editTypeStream = pipe(
+    fromDelegatedEvent(root, '.edit', 'change'),
+    map(e => e.target.value)
   );
 
-  const allActions = merge(
-    initActions, newTodoActions, newNameActions, deleteActions, toggleTodoActions,
-    toggleAllActions, editActions, cancelEditActions, editNameActions,
+  const editSubmissions = pipe(
+    fromDelegatedEvent(root, '.edit', 'keyup'),
+    filter(e => e.key === 'Enter'),
+    sampleCombine(latest(editTypeStream)),
+    map(([e, v]) => ({value: v, target: e.target}))
+  );
+
+  const confirmEditActions = pipe(
+    editSubmissions,
+    filter(e => e.value),
+    map(e => ({type: 'CONFIRMEDIT', idx: nOfLi(e.target), value: e.value})),
+    share
+  );
+
+  const deleteActions = pipe(
+    fromDelegatedEvent(root, '.destroy', 'click'),
+    mergeWith(
+      pipe(
+        editSubmissions,
+        filter(e => !e.value)
+      )
+    ),
+    map(e => ({type: 'DELETETODO', idx: nOfLi(e.target)})),
+    share
+  );
+
+  const allActions = share(merge(
+    initActions, newTodoActions, deleteActions, toggleTodoActions,
+    toggleAllActions, startEditActions, cancelEditActions,
     confirmEditActions, clearCompletedActions, hashActions
-  );
+  ));
 
   return {
-    initActions, newTodoActions, newNameActions, deleteActions, toggleTodoActions,
-    toggleAllActions, editActions, cancelEditActions, editNameActions,
+    initActions, newTodoActions, deleteActions, toggleTodoActions,
+    toggleAllActions, startEditActions, cancelEditActions,
     confirmEditActions, clearCompletedActions, hashActions, allActions
   };
 }

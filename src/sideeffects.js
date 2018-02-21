@@ -1,7 +1,9 @@
 import pipe from 'callbag-pipe';
 import merge from 'callbag-merge';
+import latest from 'callbag-latest';
 import withPrevious from 'callbag-with-previous';
 import forEach from 'callbag-for-each';
+import sampleCombine from 'callbag-sample-combine';
 
 const patch = require('snabbdom').init([
   require('snabbdom/modules/class').default,
@@ -10,12 +12,27 @@ const patch = require('snabbdom').init([
   require('snabbdom/modules/attributes').default
 ]);
 
-export default function makeSideEffects(window, actions, view){
+export default function makeSideEffects(window, state, actions, view){
 
   pipe(
     withPrevious(view),
     forEach(([cur,prev,isFirst]) => {
       patch(isFirst ? window.document.getElementById('renderoutput') : prev, cur)
+    })
+  );
+
+  pipe(
+    actions.newTodoActions,
+    forEach(a => window.document.querySelector(".new-todo").value = '')
+  );
+
+  pipe(
+    actions.startEditActions,
+    sampleCombine(latest(state)),
+    forEach(([a,s]) => {
+      let field = window.document.querySelector(".editing .edit");
+      field.value = s.todos[a.idx].text;
+      field.focus();
     })
   );
 
@@ -26,10 +43,4 @@ export default function makeSideEffects(window, actions, view){
     ),
     forEach(a => window.document.querySelector(".new-todo").focus())
   );
-
-  pipe(
-    actions.editActions,
-    forEach(() => window.document.querySelector(".editing .edit").focus())
-  );
-
 }
