@@ -5,7 +5,8 @@ const initialState = {
   todos: [],
   newName: '',
   editText: '',
-  filter: 'all'
+  filter: 'all',
+  editing: null
 };
 
 export default function makeStateStream(actions){
@@ -36,7 +37,6 @@ function reducer(state, action){
         ...state,
         todos: state.todos.concat({
           text: state.newName,
-          editing: false,
           done: false
         }),
         newName: ''
@@ -53,11 +53,12 @@ function reducer(state, action){
     }
     case 'CONFIRMEDIT': return {
       ...state,
-      todos: updateInList(state, action.idx, (t,s) => ({...t, text: s.editText}))
+      todos: updateInList(state, action.idx, (t,s) => ({...t, text: s.editText})),
+      editing: null
     }
     case 'EDIT': return {
       ...state,
-      todos: updateInList(state, action.idx, t => ({...t, editing: true})),
+      editing: action.idx,
       editText: state.todos[action.idx].text
     }
     case 'CHANGEEDITNAME': return {
@@ -66,7 +67,7 @@ function reducer(state, action){
     }
     case 'CANCELEDIT': return action.idx === state.todos.length ? state : {
       ...state,
-      todos: state.todos.map(t => ({...t, editing: false}))
+      editing: null,
     }
     case 'TOGGLEALL': return {
       ...state,
