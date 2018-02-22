@@ -22,7 +22,7 @@ export default function makeViewStream(state){
             )}
             <ul className="todo-list">
               {s.todos.map((t,n) => (s.filter === 'all' || (s.filter === 'completed' && t.done) || (s.filter === 'active' && !t.done)) && (
-                <li key={n} class={{completed: t.done, editing: t.editing}}>
+                <li key={n} class={{completed: t.done, editing: n === s.editing}}>
                   <div className="view">
                     <input className="toggle" type="checkbox" checked={t.done}/>
                     <label>{t.text}</label>

@@ -3,7 +3,8 @@ import scan from 'callbag-scan';
 
 const initialState = {
   todos: [],
-  filter: 'all'
+  filter: 'all',
+  editing: null
 };
 
 export default function makeStateStream(actions){
@@ -30,7 +31,6 @@ function reducer(state, action){
       ...state,
       todos: state.todos.concat({
         text: action.value,
-        editing: false,
         done: false
       })
     };
@@ -44,15 +44,16 @@ function reducer(state, action){
     }
     case 'CONFIRMEDIT': return {
       ...state,
-      todos: updateInList(state, action.idx, (t,s) => ({...t, editing: false, text: action.value}))
+      todos: updateInList(state, action.idx, (t,s) => ({...t, text: action.value})),
+      editing: null
     }
     case 'STARTEDIT': return {
       ...state,
-      todos: updateInList(state, action.idx, t => ({...t, editing: true}))
+      editing: action.idx
     }
     case 'CANCELEDIT': return action.idx === state.todos.length ? state : {
       ...state,
-      todos: state.todos.map(t => ({...t, editing: false}))
+      editing: null
     }
     case 'TOGGLEALL': return {
       ...state,

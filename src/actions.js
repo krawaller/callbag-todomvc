@@ -13,8 +13,6 @@ import latest from 'callbag-latest';
 import tap from 'callbag-tap';
 import sampleCombine from 'callbag-sample-combine';
 
-const log = name => tap(v => console.log(name, v));
-
 const nOfLi = node => {
   const li = node.closest('li');
   return Array.from(li.parentElement.children).indexOf(li);
@@ -42,7 +40,6 @@ export default function makeActions(window, root){
   const toggleTodoActions = pipe(
     fromDelegatedEvent(root, '.toggle', 'click'),
     map(e => ({type: 'TOGGLETODO', idx: nOfLi(e.target)})),
-    log("TOGGLETODO"),
   );
 
   const clearCompletedActions = pipe(
